@@ -1,0 +1,11 @@
+[project]
+name = "lab1"
+version = "0.1.0"
+dependencies = ["numpy", "matplotlib", "scipy"]
+
+[project.optional-dependencies]
+dev = ["black", "mypy", "ruff"]
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
