@@ -1,170 +1,163 @@
 # %%
 import math
-from matplotlib import pyplot as plt
 import numpy as np
-from scipy import stats
+import matplotlib.pyplot as plt
+import scipy.stats as stats
 
 
 class SampleDistribution:
-    def __init__(self, loc, scale, size, alpha=0.05):
-        self.sample = np.random.normal(loc, scale, size)
-        self.alpha = alpha
-        self.n = len(self.sample)
-        self.sample.sort()
-        self.xmin, self.xmax = np.min(self.sample), np.max(self.sample)
-        self.R = self.xmax - self.xmin
+    def __init__(self, data):
+        self.data = data
 
-    def calculate_basic_statistics(self):
-        mean = np.mean(self.sample)
-        variance = np.var(self.sample, ddof=1)
-        std_dev = np.sqrt(variance)
-        mu3 = np.mean((self.sample - mean) ** 3)
-        mu4 = np.mean((self.sample - mean) ** 4)
-        alpha = mu3 / std_dev**3
-        median = np.median(self.sample)
-        mad = np.mean(np.abs(self.sample - median))
-        return mean, variance, std_dev, mu3, mu4, alpha, median, mad
+        self.min = np.min(data)
+        self.max = np.max(data)
+        self.range = self.max - self.min
+        self.n = len(data)
 
-    def calculate_polygons(self, m):
-        Delta = self.R / m
-        j = np.arange(1, m + 1)
-        xj = self.xmin + (Delta / 2) * (2 * j - 1)
-        f, _ = np.histogram(self.sample, bins=m, range=(self.xmin, self.xmax))
-        Fk = np.cumsum(f)
-        aj = self.xmin + Delta * (j - 1)
-        bj = aj + Delta
-        return (xj, f, Fk, bj)
+        self.mean = np.mean(data)
+        self.var = np.var(data)
+        self.std = np.std(data)
+        self.skew = stats.skew(data)
+        self.kurtosis = stats.kurtosis(data)
 
-    def plot_generic_polygon(self, x, y, title, xlabel, plot_label, subplot_index):
-        plt.subplot(1, 4, subplot_index)
-        plt.plot(x, y, marker="o", linestyle="-", label=plot_label)
-        plt.title(title)
-        plt.xlabel(xlabel)
-        plt.grid()
-        plt.legend()
+    def plot(self, bins: int):
+        plt.figure(figsize=(20, 5))
 
-    def plot_hystogram(self, x, bins, subplot_index):
-        plt.subplot(1, 4, subplot_index)
-        plt.hist(
-            x,
+        plt.subplot(1, 4, 1)
+        self.histogram(bins)
+
+        plt.subplot(1, 4, 2)
+        self.polygon(bins, f"Полігон m={bins}")
+
+        plt.subplot(1, 4, 3)
+        self.polygon(
+            bins, cumulative=True, title=f"Полігон накопичених частот m={bins}"
+        )
+
+        plt.subplot(1, 4, 4)
+        self.polygon(
             bins,
+            cumulative=True,
+            normalized=True,
+            title=f"Нормований полігон накопичених частот m={bins}",
+        )
+
+        plt.show()
+
+    def histogram(self, bins: int):
+        plt.hist(
+            self.data,
+            bins=bins,
             label="$f_k$",
-            range=(self.xmin, self.xmax),
+            # range=(self.min, self.max),
             alpha=0.7,
             edgecolor="black",
         )
-        plt.xlabel("xk")
         plt.title(f"Гістограма m={bins}")
-        plt.grid()
         plt.legend()
 
-    def plot_histogram_and_polygons(self, m):
-        xj, f, Fk, bj = self.calculate_polygons(m)
-        plt.figure(figsize=(18, 6))
-        self.plot_hystogram(self.sample, bins=m, subplot_index=1)
-        self.plot_generic_polygon(xj, f, f"Полігон частот {m=}", "xk", "$f_k$", 2)
-        self.plot_generic_polygon(
-            xj, Fk, f"Полігон накопичених частот {m=}", "xk", "$F_k$", 3
-        )
-        self.plot_generic_polygon(
-            bj,
-            Fk / self.n,
-            f"Емпірична функція розподілу {m=}",
-            "bk",
-            "$\\frac{F_k}{n}$",
-            4,
-        )
-        plt.tight_layout()
-        plt.show()
+    def polygon(
+        self, bins: int, title: str, cumulative: bool = False, normalized: bool = False
+    ):
+        frequency, bin_edges = np.histogram(self.data, bins=bins)
+        if normalized:
+            frequency = frequency / np.sum(frequency)
+        if cumulative:
+            frequency = np.cumsum(frequency)
 
-    def plot_confidence_corridor(self):
-        edf = np.arange(1, self.n + 1) / self.n
-        delta_z = stats.norm.ppf(1 - self.alpha / 2) / np.sqrt(self.n)
-        lower_bound, upper_bound = edf - delta_z, edf + delta_z
-        plt.figure(figsize=(10, 6))
+        bin_mids = (bin_edges[1:] + bin_edges[:-1]) / 2
+        plt.plot(bin_mids, frequency, marker="o", linestyle="-")
+        plt.title(title)
+        plt.xlabel("x")
+
+    def corridor(self, alpha=0.05):
+        sorted_data = np.sort(self.data)
+        n = len(sorted_data)
+
+        z_alpha = stats.norm.ppf(1 - alpha / 2)
+        ci = z_alpha / np.sqrt(n)
+
+        y_values = np.arange(1, n + 1) / n
+        lower_bound = y_values - ci
+        upper_bound = y_values + ci
+
         plt.plot(
-            self.sample,
+            sorted_data,
             lower_bound,
             linestyle="--",
             color="red",
-            label="$F_k - \\frac{z_\\alpha}{\\sqrt{n}}$",
+            label="$F_k - \\frac{z_{\\alpha}}{\\sqrt{n}}$",
         )
         plt.plot(
-            self.sample,
+            sorted_data,
             upper_bound,
             linestyle="--",
             color="green",
-            label="$F_k + \\frac{z_\\alpha}{\\sqrt{n}}$",
+            label="$F_k + \\frac{z_{\\alpha}}{\\sqrt{n}}$",
         )
-        plt.xlabel("bk")
+        plt.xlabel("x")
         plt.legend()
+
         plt.show()
 
-    @staticmethod
-    def plot_kz_and_nz(z_values, alpha=0.05, N_val=3, epsilon=1e-5):
-        K_values = [SampleDistribution.K(z, N_val) for z in z_values]
-        N_values = [SampleDistribution.N(z, epsilon) for z in z_values]
-
-        plt.figure(figsize=(10, 6))
-        plt.plot(z_values, K_values, label="K(z)", linewidth=2)
-        plt.axhline(1 - alpha, color="r", linestyle="--", label="$1 - \\alpha$")
-        plt.xlabel("z")
-        plt.legend()
-        plt.show()
-
-        plt.figure(figsize=(10, 6))
-        plt.plot(z_values, N_values, label="N(z)", linewidth=2)
-        plt.xlabel("z")
-        plt.legend()
-        plt.show()
-
-    @staticmethod
-    def K(z, N_val):
-        if z <= 0:
-            return 0
-        else:
-            return np.sum(
-                [
-                    (-1) ** k * np.exp(-2 * k**2 * z**2)
-                    for k in range(-N_val, N_val + 1)
-                ]
-            )
-
-    @staticmethod
-    def N(z, epsilon):
-        return math.floor((1 / z) * np.sqrt(0.5 * np.log(1 / epsilon)) + 1)
+    def __str__(self):
+        return f"""
+            min={self.min}, max={self.max}, range={self.range}
+            n={self.n}, mean={self.mean}, var={self.var}, std={self.std}
+            skew={self.skew}, kurtosis={self.kurtosis}
+        """
 
 
-def main():
-    np.random.seed(42)
-    xi = SampleDistribution(loc=10, scale=9, size=2002)
-    xmax, xmin, R = xi.xmax, xi.xmin, xi.R
-    print(f"{xmax=}, {xmin=}, {R=}")
+def N(z, eps=1e-3):
+    return math.floor((1.0 / z) * np.sqrt(0.5 * np.log(1.0 / eps))) + 1
 
-    (
-        mean,
-        variance,
-        std_dev,
-        mu3,
-        mu4,
-        alpha,
-        median,
-        mad,
-    ) = xi.calculate_basic_statistics()
-    print(
-        f"{mean=}, {variance=}, {std_dev=}, {mu3=}, {mu4=}, {alpha=}, {median=}, {mad=}"
-    )
 
-    xi.plot_histogram_and_polygons(m=10)
-    xi.plot_histogram_and_polygons(m=20)
-    z_values = np.linspace(0.01, 5, 500)
+def K(z, eps=1e-3):
+    if z <= 0:
+        return 0
 
-    SampleDistribution.plot_kz_and_nz(z_values)
+    n = N(z, eps)
 
-    xi.plot_confidence_corridor()
+    def f(k):
+        return (-1) ** k * np.exp(-2 * k**2 * z**2)
+
+    return np.sum([f(k) for k in range(-n, n + 1)])
+
+
+def plot(x, y, xlabel, ylabel, title):
+    plt.figure(figsize=(10, 5))
+    plt.plot(x, y, label=ylabel)
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.title(title)
+    plt.legend()
+    plt.show()
 
 
 if __name__ == "__main__":
-    main()
+    np.random.seed(0)
+
+    data = np.random.normal(10, 9, 2002)
+    dist = SampleDistribution(data)
+
+    print(dist)
+
+    m = [10, 20]
+    for m1 in m:
+        dist.plot(m1)
+
+    dist.corridor()
+
+    z = np.linspace(0.1, 1, 1000)
+
+    eps = 1e-3
+
+    k = [K(z1, eps) for z1 in z]
+
+    plot(z, k, "z", "$K(z)$", "Критерій Колмогорова")
+
+    n = [N(z1, eps) for z1 in z]
+
+    plot(z, n, "z", "$N(z)$", f"$N(z)$ при $\\varepsilon=${eps}")
 
 # %%
