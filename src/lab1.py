@@ -49,7 +49,7 @@ class SampleDistribution:
             self.data,
             bins=bins,
             label="$f_k$",
-            # range=(self.min, self.max),
+            range=(self.min, self.max),
             alpha=0.7,
             edgecolor="black",
         )
