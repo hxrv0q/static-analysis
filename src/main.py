@@ -1,5 +1,5 @@
+# %%
 import math
-from typing import Self
 from matplotlib import pyplot as plt
 import numpy as np
 from scipy import stats
@@ -23,19 +23,7 @@ class SampleDistribution:
         alpha = mu3 / std_dev**3
         median = np.median(self.sample)
         mad = np.mean(np.abs(self.sample - median))
-
-        data = {
-            "mean": mean,
-            "variance": variance,
-            "std_dev": std_dev,
-            "mu3": mu3,
-            "mu4": mu4,
-            "alpha": alpha,
-            "median": median,
-            "mad": mad,
-        }
-
-        return data
+        return mean, variance, std_dev, mu3, mu4, alpha, median, mad
 
     def calculate_polygons(self, m):
         Delta = self.R / m
@@ -153,8 +141,19 @@ def main():
     xmax, xmin, R = xi.xmax, xi.xmin, xi.R
     print(f"{xmax=}, {xmin=}, {R=}")
 
-    basic_statistics = xi.calculate_basic_statistics()
-    print(basic_statistics)
+    (
+        mean,
+        variance,
+        std_dev,
+        mu3,
+        mu4,
+        alpha,
+        median,
+        mad,
+    ) = xi.calculate_basic_statistics()
+    print(
+        f"{mean=}, {variance=}, {std_dev=}, {mu3=}, {mu4=}, {alpha=}, {median=}, {mad=}"
+    )
 
     xi.plot_histogram_and_polygons(m=10)
     xi.plot_histogram_and_polygons(m=20)
@@ -167,3 +166,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+# %%
