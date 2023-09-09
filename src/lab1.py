@@ -102,9 +102,15 @@ class SampleDistribution:
 
     def __str__(self):
         return f"""
-            min={self.min}, max={self.max}, range={self.range}
-            n={self.n}, mean={self.mean}, var={self.var}, std={self.std}
-            skew={self.skew}, kurtosis={self.kurtosis}
+            Максимальне значення: {self.max}\n
+            Мінімальне значення: {self.min}\n
+            Розмах вибірки: {self.range}\n
+            Кількість елементів: {self.n}\n
+            Середнє значення: {self.mean}\n
+            Дисперсія: {self.var}\n
+            Середнє квадратичне відхилення: {self.std}\n
+            Коефіцієнт асиметрії: {self.skew}\n
+            Коефіцієнт ексцесу: {self.kurtosis}\n
         """
 
 
@@ -124,9 +130,11 @@ def K(z, eps=1e-3):
     return np.sum([f(k) for k in range(-n, n + 1)])
 
 
-def plot(x, y, xlabel, ylabel, title):
+def plot(x, y, xlabel, ylabel, title, axhline=None):
     plt.figure(figsize=(10, 5))
     plt.plot(x, y, label=ylabel)
+    if axhline is not None:
+        plt.axhline(axhline, color="red", linestyle="--", label="$1 - \\alpha$")
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
     plt.title(title)
@@ -148,13 +156,14 @@ if __name__ == "__main__":
 
     dist.corridor()
 
-    z = np.linspace(0.1, 1, 1000)
+    z = np.linspace(0.1, 2, 500)
 
     eps = 1e-3
 
     k = [K(z1, eps) for z1 in z]
 
-    plot(z, k, "z", "$K(z)$", "Критерій Колмогорова")
+    alpha = 0.05
+    plot(z, k, "z", "$K(z)$", "Критерій Колмогорова", axhline=1 - alpha)
 
     n = [N(z1, eps) for z1 in z]
 
