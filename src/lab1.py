@@ -77,9 +77,9 @@ class SampleDistribution:
         z_alpha = stats.norm.ppf(1 - alpha / 2)
         ci = z_alpha / np.sqrt(n)
 
-        y_values = np.arange(1, n + 1) / n
-        lower_bound = y_values - ci
-        upper_bound = y_values + ci
+        f = np.arange(1, n + 1) / n
+        lower_bound = f - ci
+        upper_bound = f + ci
 
         plt.plot(
             sorted_data,
