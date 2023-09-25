@@ -9,11 +9,17 @@ class NormalDistribution:
         self.data = data
         self.size = len(data)
 
+        # self.expectation = np.mean(data)
+
+        # self.var_corrected = np.var(data, ddof=1)
+
         self.expectation = np.sum(data) / self.size
 
         self.var = np.sum((self.data - self.expectation) ** 2) / self.size
 
         self.var_corrected = (self.size) / (self.size - 1) * self.var
+
+        assert np.equal(self.var_corrected, np.var(data, ddof=1))
 
     def __str__(self):
         return f"""
