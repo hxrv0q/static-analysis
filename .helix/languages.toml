@@ -1,0 +1,20 @@
+[language-server.copilot]
+command = "copilot"
+args = ["--stdio"]
+
+[language-server.pyright-langserver]
+command = "pyright-langserver"
+args = ["--stdio"]
+
+[language-server.pyright-langserver.config]
+python.analysis.autoSearchPaths = true
+python.analysis.userLibraryCodeForTypes = true
+python.analysis.diagnosticMode = "workspace"
+python.linting.mypyEnabled = true
+
+
+[[language]]
+name = "python"
+auto-format = true
+language-servers =  ["pyright-langserver", "copilot"]
+formatter = { command = "black", args = ["-", "--quiet", "--line-length=79"]}

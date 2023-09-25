@@ -1,0 +1,10 @@
+[editor.lsp]
+copilot-auto = false
+
+[keys.normal]
+"C-y" = "toggle_copilot_auto"
+
+[keys.insert]
+"C-e" = "show_or_next_copilot_completion"
+"C-a" = "hide_or_prev_copilot_completion"
+"C-y" = "apply_copilot_completion"
