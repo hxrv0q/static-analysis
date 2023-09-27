@@ -105,6 +105,43 @@ class PoissonDistributionConfidenceInterval:
         plt.show()
 
 
+def cofidence_interval(xy: list[int, 2], alpha=0.05):
+    xalpha = stats.norm.ppf(1 - alpha / 2)
+
+    n = len(xy[0])
+
+    xmean = np.mean(xy[0])
+    ymean = np.mean(xy[1])
+
+    m = 1 / n * np.sum((xy[0] - xmean) * (xy[1] - ymean))
+
+    sigma2x = 1 / n * np.sum((xy[0] - xmean) ** 2)
+    sigma2y = 1 / n * np.sum((xy[1] - ymean) ** 2)
+
+    k = m / math.sqrt(sigma2x * sigma2y)
+
+    k_formula = (
+        np.sum(xy[0] * xy[1]) - 1 / n * (np.sum(xy[0]) * np.sum(xy[1]))
+    ) / math.sqrt(
+        (np.sum(xy[0] ** 2) - 1 / n * (np.sum(xy[0])) ** 2)
+        * (np.sum(xy[1] ** 2) - 1 / n * (np.sum(xy[1])) ** 2)
+    )
+
+    assert abs(k-k_formula) < 1e-5
+
+    kleft = math.tanh(math.atanh(k) - xalpha / np.sqrt(n - 3))
+    kright = math.tanh(math.atanh(k) + xalpha / np.sqrt(n - 3))
+
+    print(f"Коефіцієнт кореляції: {k}")
+    print(f"Границі довірчого інтервалу: [{kleft}, {kright}]")
+
+    plt.plot(xy[0], xy[1], "o", color="red", label="$[(XY^T)^{<2>}]$")
+    plt.ylabel("$[(XY^T)^{<2>}]$")
+    plt.xlabel("$[(XY^T)^{<1>}]$")
+    plt.legend()
+    plt.show()
+
+
 def main():
     np.random.seed(0)
 
@@ -120,6 +157,24 @@ def main():
 
     pdci.histogram(bins=10)
     pdci.plot_confidence_interval()
+
+    xy1 = np.array(
+        [
+            [-2.7, -0.931, -0.257, 1.381, -0.315, -3.05, 0.054, 0.835],
+            [-14.902, -18.113, 6.138, 13.813, -0.227, 4.927, 2.576, 1.184],
+        ]
+    )
+    print(xy1)
+    cofidence_interval(xy1)
+
+    xy2 = np.array(
+        [
+            [1.661, 3.333, -1.12, 0.377, -2.28, -5.092, 3.124],
+            [-14.433, 1.527, 11.866, 2.121, -6.254, 1.58, 13.972],
+        ]
+    )
+    print(xy2) 
+    cofidence_interval(xy2)
 
 
 if __name__ == "__main__":
