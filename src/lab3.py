@@ -5,18 +5,20 @@ import scipy.stats as stats
 import matplotlib.pyplot as plt
 
 
-class NormalDistributionConfidenceInterval:
+class NormalDistribution:
     def __init__(self, data):
         self.data = data
         self.n = len(data)
 
         self.mean = np.mean(data)
-        self.std_dev = np.std(data, ddof=1)
+        self.var = np.var(data, ddof=1)
+
+        assert np.equal(self.var, np.sum((data - self.mean) ** 2) / (self.n - 1))
 
         # Ступені свободи
         self.df = self.n - 1
-        # Стандартна помилка
-        self.se = self.std_dev / np.sqrt(self.n)
+        # Стандартна похибка
+        self.se = self.var / np.sqrt(self.n)
 
         self.alpha = 0.05
         self.t = stats.t.ppf(1 - self.alpha, self.df)
@@ -26,7 +28,7 @@ class NormalDistributionConfidenceInterval:
             stats.chi2.ppf(self.alpha / 2, self.df),
             stats.chi2.ppf(1 - self.alpha / 2, self.df),
         ]
-        self.ci_var = [self.df * self.std_dev**2 / chi for chi in self.chi2]
+        self.ci_var = [self.df * self.var**2 / chi for chi in self.chi2]
 
     def __str__(self) -> str:
         return f"""
@@ -36,7 +38,7 @@ class NormalDistributionConfidenceInterval:
         """
 
 
-class PoissonDistributionConfidenceInterval:
+class PoissonDistribution:
     def __init__(self, data, alpha=0.05):
         self.data = data
         self.alpha = alpha
@@ -127,7 +129,7 @@ def cofidence_interval(xy: list[int, 2], alpha=0.05):
         * (np.sum(xy[1] ** 2) - 1 / n * (np.sum(xy[1])) ** 2)
     )
 
-    assert abs(k-k_formula) < 1e-5
+    assert abs(k - k_formula) < 1e-5
 
     kleft = math.tanh(math.atanh(k) - xalpha / np.sqrt(n - 3))
     kright = math.tanh(math.atanh(k) + xalpha / np.sqrt(n - 3))
@@ -147,16 +149,17 @@ def main():
 
     data = np.random.normal(10, 9, 2002)
 
-    ndci = NormalDistributionConfidenceInterval(data)
+    normal = NormalDistribution(data)
 
-    print(ndci)
+    print(normal)
 
-    data = np.random.poisson(6, 2002)
+    lam = 6
+    data = np.random.poisson(lam, 2002)
 
-    pdci = PoissonDistributionConfidenceInterval(data)
+    poisson = PoissonDistribution(data)
 
-    pdci.histogram(bins=10)
-    pdci.plot_confidence_interval()
+    poisson.histogram(bins=10)
+    poisson.plot_confidence_interval()
 
     xy1 = np.array(
         [
@@ -173,7 +176,7 @@ def main():
             [-14.433, 1.527, 11.866, 2.121, -6.254, 1.58, 13.972],
         ]
     )
-    print(xy2) 
+    print(xy2)
     cofidence_interval(xy2)
 
 
