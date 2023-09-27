@@ -1,5 +1,5 @@
 [editor.lsp]
-copilot-auto = false
+copilot-auto = true
 
 [keys.normal]
 "C-y" = "toggle_copilot_auto"
