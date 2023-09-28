@@ -17,4 +17,4 @@ python.linting.mypyEnabled = true
 name = "python"
 auto-format = true
 language-servers =  ["pyright-langserver", "copilot"]
-formatter = { command = "black", args = ["-", "--quiet", "--line-length=79"]}
+formatter = { command = "black", args = ["-", "--quiet", "--line-length=119"]}

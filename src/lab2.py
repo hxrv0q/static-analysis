@@ -1,148 +1,101 @@
-# %%
 import math
+from typing import Callable
 import numpy as np
 import matplotlib.pyplot as plt
 
 
-class NormalDistribution:
-    def __init__(self, data):
-        self.data = data
-        self.size = len(data)
-
-        # self.expectation = np.mean(data)
-
-        # self.var_corrected = np.var(data, ddof=1)
-
-        self.expectation = np.sum(data) / self.size
-
-        self.var = np.sum((self.data - self.expectation) ** 2) / self.size
-
-        self.var_corrected = (self.size) / (self.size - 1) * self.var
-
-        assert np.equal(self.var_corrected, np.var(data, ddof=1))
-
-    def __str__(self):
-        return f"""
-            Математичне сподівання: {self.expectation}
-            Виправлена дисперсія: {self.var_corrected}
-        """
-
-    def __len__(self):
-        return self.size
+def generate_data(dist_type: str, N: int, **kwargs) -> np.ndarray:
+    match dist_type:
+        case "normal":
+            return np.random.normal(kwargs["A"], kwargs["B"], N)
+        case "poisson":
+            return np.random.poisson(kwargs["lam"], N)
+        case "exponential":
+            return np.random.exponential(1 / kwargs["lam"], N)
+        case _:
+            raise ValueError(f"Unknown distribution type: {dist_type}")
 
 
-class BaseDistribution:
-    def __init__(self, lam, data):
-        self.lam = lam
-        self.data = data
-
-        self.size = len(data)
-
-        self.mean = np.mean(data)
-
-    def log_likelihood(self, lam):
-        pass
-
-    def lambda_mle(self, n):
-        pass
-
-    def plot(self, lams, lam_true):
-        self.plot_log_likelihood(lams)
-        self.plot_lambda_mle(lam_true)
-
-    def plot_log_likelihood(self, lams):
-        mle = [self.log_likelihood(lam) for lam in lams]
-
-        plt.figure(figsize=(10, 5))
-        plt.plot(lams, mle, color="r", label="LnL($\lambda$)")
-        plt.xlabel("$\lambda$")
-        plt.ylabel("LnL($\lambda$)")
-        plt.legend()
-        plt.show()
-
-    def plot_lambda_mle(self, lam_true):
-        mle = [self.lambda_mle(n) for n in range(1, len(self.data) + 1)]
-
-        plt.figure(figsize=(10, 5))
-        plt.scatter(
-            range(1, len(self.data) + 1), mle, label="$\lambda(n)$", marker="o", s=5
-        )
-        plt.xlabel("n")
-        plt.ylabel("$\lambda(n)$")
-        plt.axhline(y=lam_true, color="r", linestyle="--", label=f"{lam_true}")
-        plt.legend()
-        plt.show()
-
-    def lambdas(self, n: list):
-        return [self.lambda_mle(i) for i in n]
+def find_unbiased_estimates(data: np.ndarray) -> tuple[float, float]:
+    n = len(data)
+    expectation = np.sum(data) / n
+    variance = np.sum((data - expectation) ** 2) / n
+    corrected_variance = n / (n - 1) * variance
+    return expectation, corrected_variance
 
 
-class PoissonDistribution(BaseDistribution):
-    def __init__(self, lam, size):
-        data = np.random.poisson(lam, size)
-        super().__init__(lam, data)
-
-    def log_likelihood(self, lam):
-        return (
-            -self.size
-            + lam
-            + np.sum(self.data) * np.log(lam)
-            - np.sum(np.log(np.vectorize(math.factorial)(self.data)))
-        )
-
-    def lambda_mle(self, n):
-        return np.sum(self.data[:n]) / n
-
-
-class ExponentialDistribution(BaseDistribution):
-    def __init__(self, lam, size):
-        data = np.random.exponential(1 / lam, size)
-        super().__init__(lam, data)
-
-    def log_likelihood(self, lam):
-        return self.size * np.log(lam) - lam * np.sum(self.data)
-
-    def lambda_mle(self, n):
-        return n / np.sum(self.data[:n])
+def plot_graph(
+    x: np.ndarray,
+    y: np.ndarray,
+    xlabel: str,
+    ylabel: str,
+    title: str,
+    ax: None | float = None,
+) -> None:
+    if ax is None:
+        plt.plot(x, y, color="r", label=title)
+    else:
+        plt.scatter(x, y, label=title, marker="o", s=2)
+        plt.axhline(y=ax, color="r", linestyle="-", label=f"{ax}")
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.legend()
+    plt.show()
 
 
-def print_lambdas(dist: BaseDistribution, n: list):
-    lambdas = dist.lambdas(n)
-    print("Оцінки параметра λ: ")
-    print("\n".join([f"λ({n[i]})={lam}" for i, lam in enumerate(lambdas)]))
+def compute_log_likehood(lams: np.ndarray, data: np.ndarray, log_likehood_func: Callable) -> np.ndarray:
+    return np.array([log_likehood_func(lam, data) for lam in lams])
+
+
+def compute_lambda(n: int, data: np.ndarray, lambda_func: Callable) -> np.ndarray:
+    return np.array([lambda_func(i, data) for i in range(1, n + 1)])
+
+
+def print_lambda_values(lambda_values: np.ndarray, intervals: list[int]) -> None:
+    for i in intervals:
+        print(f"λ({i}) = {lambda_values[i - 1]}")
+
+
+def plot_and_print(
+    data: np.ndarray,
+    lam: float,
+    lams: np.ndarray,
+    log_likehood_func: Callable,
+    lambda_func: Callable,
+    intervals: list[int],
+) -> None:
+    n = len(data)
+    lambda_values = compute_lambda(n, data, lambda_func)
+    log_likehood_values = compute_log_likehood(lams, data, log_likehood_func)
+
+    plot_graph(lams, log_likehood_values, "$\\lambda$", "$LnL(\\lambda)$", "$LnL(\\lambda)$")
+    plot_graph(np.arange(1, n + 1), lambda_values, "n", "$\\lambda(n)$", "$\\lambda(n)$", ax=lam)
+    print_lambda_values(lambda_values, intervals)
 
 
 def main():
     np.random.seed(0)
 
-    data = np.random.normal(10, 9, 2002)
-
-    normal_dist = NormalDistribution(data)
-
-    print(normal_dist)
-
+    N = 2002
     lam = 0.6
+    lams = np.arange(0.1, 1, 0.01)
+    intevals = [i * 6 for i in range(10, 6 * 10, 10)]
 
-    N = [i * 6 for i in range(10, 60, 10)]
+    data_normal = generate_data("normal", N, A=10, B=9)
+    expectation, corrected_variance = find_unbiased_estimates(data_normal)
+    print(f"Математичне сподівання: {expectation}")
+    print(f"Виправлена дисперсія: {corrected_variance}")
 
-    n = len(data)
+    data_poisson = generate_data("poisson", N, lam=lam)
+    poisson_log_likehood_func = lambda lam, data: -len(data) * lam + np.sum(data) * np.log(lam) - np.sum(data)
+    poisson_lambda_func = lambda n, data: np.sum(data[:n]) / n
+    plot_and_print(data_poisson, lam, lams, poisson_log_likehood_func, poisson_lambda_func, intevals)
 
-    poisson_dist = PoissonDistribution(lam, n)
-
-    lams = np.linspace(0.01, lam * 2, 1000)
-
-    poisson_dist.plot(lams, poisson_dist.lam)
-
-    print_lambdas(poisson_dist, N)
-
-    exponential_dist = ExponentialDistribution(lam, n)
-
-    exponential_dist.plot(lams, exponential_dist.lam)
-
-    print_lambdas(exponential_dist, N)
+    data_expotential = generate_data("exponential", N, lam=lam)
+    exponential_log_likehood_func = lambda lam, data: len(data) * math.log(lam) - lam * np.sum(data)
+    exponential_lambda_func = lambda n, data: n / np.sum(data[:n])
+    plot_and_print(data_expotential, lam, lams, exponential_log_likehood_func, exponential_lambda_func, intevals)
 
 
 if __name__ == "__main__":
     main()
-
-# %%
