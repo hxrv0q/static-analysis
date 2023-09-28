@@ -4,7 +4,7 @@ version = "0.1.0"
 dependencies = ["numpy", "matplotlib", "scipy"]
 
 [project.optional-dependencies]
-dev = ["black", "mypy", "ruff"]
+dev = ["black", "mypy", "ruff", "ruff-lsp"]
 
 [build-system]
 requires = ["setuptools", "wheel"]

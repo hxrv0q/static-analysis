@@ -43,7 +43,9 @@ def plot_graph(
     plt.show()
 
 
-def compute_log_likehood(lams: np.ndarray, data: np.ndarray, log_likehood_func: Callable) -> np.ndarray:
+def compute_log_likehood(
+    lams: np.ndarray, data: np.ndarray, log_likehood_func: Callable
+) -> np.ndarray:
     return np.array([log_likehood_func(lam, data) for lam in lams])
 
 
@@ -68,8 +70,17 @@ def plot_and_print(
     lambda_values = compute_lambda(n, data, lambda_func)
     log_likehood_values = compute_log_likehood(lams, data, log_likehood_func)
 
-    plot_graph(lams, log_likehood_values, "$\\lambda$", "$LnL(\\lambda)$", "$LnL(\\lambda)$")
-    plot_graph(np.arange(1, n + 1), lambda_values, "n", "$\\lambda(n)$", "$\\lambda(n)$", ax=lam)
+    plot_graph(
+        lams, log_likehood_values, "$\\lambda$", "$LnL(\\lambda)$", "$LnL(\\lambda)$"
+    )
+    plot_graph(
+        np.arange(1, n + 1),
+        lambda_values,
+        "n",
+        "$\\lambda(n)$",
+        "$\\lambda(n)$",
+        ax=lam,
+    )
     print_lambda_values(lambda_values, intervals)
 
 
@@ -87,14 +98,38 @@ def main():
     print(f"Виправлена дисперсія: {corrected_variance}")
 
     data_poisson = generate_data("poisson", N, lam=lam)
-    poisson_log_likehood_func = lambda lam, data: -len(data) * lam + np.sum(data) * np.log(lam) - np.sum(data)
-    poisson_lambda_func = lambda n, data: np.sum(data[:n]) / n
-    plot_and_print(data_poisson, lam, lams, poisson_log_likehood_func, poisson_lambda_func, intevals)
+
+    def poisson_log_likehood_func(lam, data):
+        return -len(data) * lam + np.sum(data) * np.log(lam) - np.sum(data)
+
+    def poisson_lambda_func(n, data):
+        return np.sum(data[:n]) / n
+
+    plot_and_print(
+        data_poisson,
+        lam,
+        lams,
+        poisson_log_likehood_func,
+        poisson_lambda_func,
+        intevals,
+    )
 
     data_expotential = generate_data("exponential", N, lam=lam)
-    exponential_log_likehood_func = lambda lam, data: len(data) * math.log(lam) - lam * np.sum(data)
-    exponential_lambda_func = lambda n, data: n / np.sum(data[:n])
-    plot_and_print(data_expotential, lam, lams, exponential_log_likehood_func, exponential_lambda_func, intevals)
+
+    def exponential_log_likehood_func(lam, data):
+        return len(data) * math.log(lam) - lam * np.sum(data)
+
+    def exponential_lambda_func(n, data):
+        return n / np.sum(data[:n])
+
+    plot_and_print(
+        data_expotential,
+        lam,
+        lams,
+        exponential_log_likehood_func,
+        exponential_lambda_func,
+        intevals,
+    )
 
 
 if __name__ == "__main__":

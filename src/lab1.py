@@ -24,7 +24,9 @@ def plot_histogram(data: np.ndarray, bins: int):
     plt.show()
 
 
-def plot_polygon(data: np.ndarray, bins: int, cumulative: bool = False, normalized: bool = False):
+def plot_polygon(
+    data: np.ndarray, bins: int, cumulative: bool = False, normalized: bool = False
+):
     frequency, bin_edges = np.histogram(data, bins)
     frequency = frequency / len(data) if normalized else frequency
     frequency = np.cumsum(frequency) if cumulative else frequency
@@ -37,7 +39,7 @@ def plot_polygon(data: np.ndarray, bins: int, cumulative: bool = False, normaliz
 
 def plot_corridor(data: np.ndarray, alpha: float = 0.05):
     sorted_data, n = np.sort(data), len(data)
-    z_alpha, ci = stats.norm.ppf(1 - alpha / 2), stats.norm.ppf(1 - alpha / 2) / np.sqrt(n)
+    _, ci = stats.norm.ppf(1 - alpha / 2), stats.norm.ppf(1 - alpha / 2) / np.sqrt(n)
 
     plt.plot(sorted_data, np.arange(1, n + 1) / n - ci, linestyle="--", color="red")
     plt.plot(sorted_data, np.arange(1, n + 1) / n + ci, linestyle="--", color="green")
