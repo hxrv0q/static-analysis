@@ -1,3 +1,4 @@
+# %%
 import math
 import numpy as np
 import scipy.stats as stats
@@ -11,7 +12,7 @@ class ConfidenceIntervalAnalyzer:
 
     def compute_cofidence_interval_normal(self, data):
         N = len(data)
-        t = stats.t.ppf(1 - self.alpha, N - 1)
+        t = stats.t.ppf(1 - self.alpha, N)
         mx = np.mean(data)
         Dx = np.var(data)
 
@@ -146,3 +147,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+# %%
