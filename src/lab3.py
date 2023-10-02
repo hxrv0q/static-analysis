@@ -16,8 +16,8 @@ def compute_confidence_interval_variance_and_expectation(
         expectation + t * variance / np.sqrt(n),
     )
     ci_variance = (
-        float((n - 1) * expectation / stats.chi2.ppf(1 - alpha / 2, n - 1)),
-        float((n - 1) * expectation / stats.chi2.ppf(alpha / 2, n - 1)),
+        float((n - 1) * variance / stats.chi2.ppf(1 - alpha / 2, n - 1)),
+        float((n - 1) * variance / stats.chi2.ppf(alpha / 2, n - 1)),
     )
 
     return ci_expectation, ci_variance
