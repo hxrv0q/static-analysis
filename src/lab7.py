@@ -1,65 +1,70 @@
-# fmt:off
 import numpy as np
 from scipy.stats import f
 
+# fmt:off
 data = np.array([
-    [6.014, 7.907, 6.628, 7.882],
-    [7.305, 7.514, 8.079, 8.219],
-    [8.764, 8.51, 9.255, 9.773]
+    [3.836, 5.468, 5.784, 5.593], 
+    [5.978, 6.131, 6.724, 7.264],
+    [7.098, 6.954, 7.346, 8.136]
 ])
-print(data)
+# fmt:on
 
-# Обчислюємо загальне середнє значення
-grand_mean = np.mean(data)
+rows, cols = data.shape
+n = rows * cols
 
-# Обчислюємо суму квадратів для фактору A (рядки)
-ss_a = np.sum((np.mean(data, axis=1) - grand_mean) ** 2) * data.shape[1]
+print(f"{rows=}, {cols=}, {n=}")
 
-# Обчислюємо суму квадратів для фактору B (стовпці)
-ss_b = np.sum((np.mean(data, axis=0) - grand_mean) ** 2) * data.shape[0]
+mean = np.mean(data)
 
-# Обчислюємо суму квадратів для взаємодії факторів A і B
-ss_ab = np.sum((data - np.mean(data, axis=0) - np.mean(data, axis=1)[:, np.newaxis] + grand_mean) ** 2)
+mean_a = np.mean(data, axis=1)
+mean_b = np.mean(data, axis=0)
 
-# Обчислюємо ступені свободи для кожної суми квадратів
-df_a = data.shape[0] - 1
-df_b = data.shape[1] - 1
-df_ab = df_a * df_b
+print(f"mean={mean:.3f}\n{mean_a=}\n{mean_b=}")
 
-# Обчислюємо середнє квадратичне для кожного фактора та взаємодії
-ms_a = ss_a / df_a
-ms_b = ss_b / df_b
-ms_ab = ss_ab / df_ab
+sigma_a = (cols / n) * np.sum((mean_a - mean) ** 2)
+sigma_b = (rows / n) * np.sum((mean_b - mean) ** 2)
 
-# Обчислюємо F-статистику для кожного фактора та взаємодії
-f_a = ms_a / ms_ab
-f_b = ms_b / ms_ab
-f_ab = ms_ab / ms_ab
+# fmt:off
+sigma_0 = (1 / n) * np.sum(((data - mean_a[:, np.newaxis] - mean_b[np.newaxis, :]) + mean) ** 2)
+# fmt:on
+sigma = (1 / n) * np.sum((data - mean) ** 2)
 
-# Визначаємо критичне F-значення, використовуючи рівень значущості та ступені свободи
+print(f"sigma_a={sigma_a:.3f}, sigma_b={sigma_b:.3f}, sigma_0={sigma_0:.3f}, sigma={sigma:.3f}")
+
 alpha = 0.1
-crit_a = f.ppf(1 - alpha, df_a, df_ab)
-crit_b = f.ppf(1 - alpha, df_b, df_ab)
-crit_ab = f.ppf(1 - alpha, df_ab, df_ab)
 
-# Порівнюємо F-статистику з критичним F-значенням, щоб визначити, чи фактор або взаємодія є значущими
-if f_a > crit_a:
+FA = sigma_a / sigma_0
+F = f.ppf(1 - alpha, rows - 1, n - rows - cols + 1)
+print(f"FA={FA:.3f}, F={F:.3f}")
+
+if FA < F:
     print("Залежить від фактору A")
 else:
     print("Не залежить від фактору A")
 
-if f_b > crit_b:
+FB = sigma_b / sigma_0
+F = f.ppf(1 - alpha, cols - 1, n - rows - cols + 1)
+print(f"FB={FB:.3f}, F={F:.3f}")
+
+if FB < F:
     print("Залежить від фактору B")
 else:
     print("Не залежить від фактору B")
 
-if f_ab > crit_ab:
-    print("Взаємодія між факторами A і B є значущою")
-else:
-    print("Взаємодія між факторами A і B не є значущою")
-# fmt:on
+var = sigma_0 * n / (n- rows - cols + 1)
+print(f"var={var:.3f}")
+    
+coff_a = sigma_a / sigma
+coff_b = sigma_b / sigma
 
-mA = np.mean(data, axis=1)
-deviation = data - mA.reshape(-1, 1)
-xi = mA.reshape(-1, 1) + deviation
-print(xi)
+print(f"coff_a={coff_a:.3f}, coff_b={coff_b:.3f}")
+
+# Уточнена модель
+
+np.random.seed(0)
+new_data = np.random.normal(0, np.sqrt(var), data.shape)
+
+refined_model = mean_a[:, np.newaxis] + new_data
+
+print(f"{data=}")
+print(f"{refined_model=}")
